@@ -44,6 +44,8 @@ button {
     cursor: pointer; 
 }
 
+button:active { background-color: #c81010; }
+
 .list-header { 
     display: flex; 
     justify-content: space-between; 
@@ -56,6 +58,7 @@ button {
 .total-box { font-size: 18px; font-weight: bold; color: #0038A8; }
 #total-amount { color: #ED1C24; font-size: 20px; }
 
+/* 내역 아이템 구조 */
 .item { 
     display: flex; 
     justify-content: space-between; 
@@ -64,6 +67,19 @@ button {
     border-bottom: 1px solid #f9f9f9; 
 }
 
-.info { display: flex; flex-direction: column; }
-.info .time { font-size: 12px; color: #999; margin-top: 4px; }
-.amount { font-weight: bold; color: #d32f2f; font-size: 18px; }
+.info { display: flex; flex-direction: column; flex: 1; }
+.info .time { font-size: 11px; color: #999; margin-top: 4px; }
+.amount-group { display: flex; align-items: center; gap: 10px; }
+.amount { font-weight: bold; color: #d32f2f; font-size: 17px; }
+
+/* 삭제 버튼 스타일 */
+.delete-btn {
+    background-color: #eee;
+    color: #888;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.delete-btn:hover { background-color: #ffdada; color: #d32f2f; }
