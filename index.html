@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>태국 여행 가계부 🇹🇭</title>
+    
+    <script>
+        const url = location.href;
+        // 카카오톡 브라우저인지 확인
+        if (/KAKAOTALK/i.test(navigator.userAgent)) {
+            // 카카오톡 외부 브라우저(크롬, 사파리 등)로 열기 호출
+            location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+        }
+    </script>
+    
     <link rel="stylesheet" href="style.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
@@ -34,7 +44,8 @@
                     총액: <span id="total-amount">0</span> ฿
                 </div>
             </div>
-            <div id="history-list"></div>
+            <div id="history-list">
+                </div>
         </div>
     </div>
 
