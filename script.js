@@ -14,7 +14,10 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let currentItems = [];
 
-// 데이터 저장
+// 요청하신 환율 47.3 적용
+const EXCHANGE_RATE = 47.3; 
+
+// 데이터 저장 함수
 function saveData() {
     const content = document.getElementById('content').value;
     const amount = document.getElementById('amount').value;
@@ -30,20 +33,21 @@ function saveData() {
     });
 }
 
-// 데이터 삭제
+// 데이터 삭제 함수
 function deleteData(id) {
     if (confirm("정말 삭제하시겠습니까?")) { 
         db.ref('expenses/' + id).remove().then(() => { alert("삭제되었습니다."); }); 
     }
 }
 
-// 엑셀 내보내기
+// 엑셀 내보내기 기능
 function exportToExcel() {
     if (currentItems.length === 0) { alert("내역이 없습니다."); return; }
-    let csvContent = "\uFEFF날짜,내용,금액(Baht)\n";
+    let csvContent = "\uFEFF날짜,내용,금액(Baht),환산(Won)\n";
     currentItems.forEach(item => {
         const date = new Date(item.timestamp).toLocaleString('ko-KR').replace(/,/g, '');
-        csvContent += `${date},${item.content},${item.amount}\n`;
+        const won = Math.round(item.amount * EXCHANGE_RATE);
+        csvContent += `${date},${item.content},${item.amount},${won}\n`;
     });
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -53,47 +57,35 @@ function exportToExcel() {
     link.click();
 }
 
-// ★ PDF 내보내기 (여백 추가 및 잘림 방지 버전) ★
+// PDF 내보내기 기능 (여백 및 잘림 방지)
 async function exportToPDF() {
     const { jsPDF } = window.jspdf;
     const area = document.getElementById('print-area');
     const delBtns = document.querySelectorAll('.delete-btn');
     
-    // 1. 삭제 버튼 숨기기
-    delBtns.forEach(btn => btn.style.display = 'none');
+    delBtns.forEach(btn => btn.style.display = 'none'); // 삭제 버튼 숨김
 
-    // 2. 캡처 옵션 설정 (여백 확보를 위해 캔버스 크기 조절)
-    html2canvas(area, { 
-        scale: 2,           // 화질 개선
-        useCORS: true,      // 이미지 로드 허용
-        logging: false,
-        backgroundColor: "#ffffff" // 배경은 흰색으로 고정
-    }).then(canvas => {
+    html2canvas(area, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4'); // A4 사이즈 PDF 생성
-        
+        const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        // 여백 설정 (좌우 10mm씩 띄움)
         const margin = 10; 
-        const innerWidth = pdfWidth - (margin * 2);
+        const innerWidth = pdfWidth - (margin * margin);
         const innerHeight = (canvas.height * innerWidth) / canvas.width;
         
-        // 이미지를 중앙에 배치 (여백 적용)
         pdf.addImage(imgData, 'PNG', margin, margin, innerWidth, innerHeight);
-        
         pdf.save("태국여행_가계부.pdf");
         
-        // 3. 삭제 버튼 복구
-        delBtns.forEach(btn => btn.style.display = 'block');
+        delBtns.forEach(btn => btn.style.display = 'block'); // 삭제 버튼 복구
     });
 }
 
-// 실시간 데이터 불러오기
+// 실시간 데이터 리스너
 db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     const listDiv = document.getElementById('history-list');
     const totalSpan = document.getElementById('total-amount');
+    const totalWonSpan = document.getElementById('total-won');
+    
     listDiv.innerHTML = ''; 
     let totalSum = 0;
     currentItems = [];
@@ -102,14 +94,22 @@ db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
         currentItems.push({ id: childSnapshot.key, ...val });
         totalSum += val.amount;
     });
+
+    // 총액 업데이트 (바트 및 원화)
     totalSpan.innerText = totalSum.toLocaleString();
+    totalWonSpan.innerText = `(${Math.round(totalSum * EXCHANGE_RATE).toLocaleString()}원)`;
+
+    // 내역 리스트 표시 (최신순)
     [...currentItems].reverse().forEach((item) => {
         const date = new Date(item.timestamp).toLocaleString('ko-KR');
+        const wonAmount = Math.round(item.amount * EXCHANGE_RATE);
+        
         listDiv.innerHTML += `
             <div class="item">
                 <div class="info"><strong>${item.content}</strong><span class="time">${date}</span></div>
                 <div class="amount-group">
                     <span class="amount">${item.amount.toLocaleString()} ฿</span>
+                    <span class="item-won">(${wonAmount.toLocaleString()}원)</span>
                     <button class="delete-btn" onclick="deleteData('${item.id}')">삭제</button>
                 </div>
             </div>`;
