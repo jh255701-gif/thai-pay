@@ -1,4 +1,4 @@
-// 본인의 Firebase 설정값 적용 완료
+// 본인의 Firebase 설정값 (아까 사용하던 것을 그대로 넣으세요)
 const firebaseConfig = {
     apiKey: "AIzaSyBnh9Ij0qZ7KMUyXVQoJmGxuhoeeq2lTos",
     authDomain: "thai-feee6.firebaseapp.com",
@@ -9,11 +9,9 @@ const firebaseConfig = {
     appId: "1:632113518491:web:4bbc9416b08f2a42d6333e"
 };
 
-// Firebase 초기화 (호환 모드)
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 데이터 저장 함수
 function saveData() {
     const content = document.getElementById('content').value;
     const amount = document.getElementById('amount').value;
@@ -23,33 +21,36 @@ function saveData() {
         return;
     }
 
-    // 데이터베이스에 저장
     const newPostRef = db.ref('expenses').push();
     newPostRef.set({
         content: content,
         amount: Number(amount),
         timestamp: Date.now()
     }).then(() => {
-        // 입력창 비우기
         document.getElementById('content').value = '';
         document.getElementById('amount').value = '';
     });
 }
 
-// 실시간 내역 불러오기 (최신순)
 db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     const listDiv = document.getElementById('history-list');
+    const totalSpan = document.getElementById('total-amount');
     listDiv.innerHTML = ''; 
 
+    let totalSum = 0; // 총액 계산용 변수
     const data = [];
+
     snapshot.forEach((childSnapshot) => {
-        data.push(childSnapshot.val());
+        const item = childSnapshot.val();
+        data.push(item);
+        totalSum += item.amount; // 금액을 하나씩 더함
     });
 
-    // 최신순 정렬
+    // 화면에 총액 표시
+    totalSpan.innerText = totalSum.toLocaleString();
+
     data.reverse().forEach((item) => {
         const date = new Date(item.timestamp).toLocaleString('ko-KR');
-        
         listDiv.innerHTML += `
             <div class="item">
                 <div class="info">

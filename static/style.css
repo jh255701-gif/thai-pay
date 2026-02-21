@@ -1,3 +1,4 @@
+/* 기본 배경 및 폰트 설정 */
 body { 
     font-family: 'Malgun Gothic', sans-serif; 
     background-color: #f0f2f5; 
@@ -7,6 +8,7 @@ body {
     justify-content: center; 
 }
 
+/* 가계부 전체 박스 */
 .app-container { 
     width: 100%; 
     max-width: 450px; 
@@ -16,8 +18,10 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
 }
 
+/* 제목 스타일 */
 h1 { text-align: center; color: #0038A8; margin-bottom: 30px; }
 
+/* 입력창 및 버튼 섹션 */
 .input-section { 
     display: flex; 
     flex-direction: column; 
@@ -46,8 +50,31 @@ button {
 
 button:active { background-color: #c81010; }
 
-h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+/* 리스트 헤더 (제목 + 총액) */
+.list-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 2px solid #eee; 
+    padding-bottom: 10px; 
+    margin-bottom: 10px; 
+}
 
+h3 { margin: 0; font-size: 18px; color: #333; }
+
+/* 총액 강조 스타일 */
+.total-box { 
+    font-size: 18px; 
+    font-weight: bold; 
+    color: #0038A8; 
+}
+
+#total-amount { 
+    color: #ED1C24; 
+    font-size: 20px;
+}
+
+/* 개별 내역 아이템 스타일 */
 .item { 
     display: flex; 
     justify-content: space-between; 
