@@ -44,7 +44,13 @@ button {
     cursor: pointer; 
 }
 
-button:active { background-color: #c81010; }
+/* 엑셀 내보내기 버튼 스타일 */
+.export-btn {
+    background-color: #217346; /* 엑셀 색상 */
+    margin-top: -5px;
+}
+
+button:active { opacity: 0.8; }
 
 .list-header { 
     display: flex; 
@@ -58,7 +64,6 @@ button:active { background-color: #c81010; }
 .total-box { font-size: 18px; font-weight: bold; color: #0038A8; }
 #total-amount { color: #ED1C24; font-size: 20px; }
 
-/* 내역 아이템 구조 */
 .item { 
     display: flex; 
     justify-content: space-between; 
@@ -72,7 +77,6 @@ button:active { background-color: #c81010; }
 .amount-group { display: flex; align-items: center; gap: 10px; }
 .amount { font-weight: bold; color: #d32f2f; font-size: 17px; }
 
-/* 삭제 버튼 스타일 */
 .delete-btn {
     background-color: #eee;
     color: #888;
@@ -82,4 +86,3 @@ button:active { background-color: #c81010; }
     font-size: 11px;
     cursor: pointer;
 }
-.delete-btn:hover { background-color: #ffdada; color: #d32f2f; }

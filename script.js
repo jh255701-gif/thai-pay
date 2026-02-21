@@ -1,4 +1,3 @@
-// Firebase 설정
 const firebaseConfig = {
     apiKey: "AIzaSyBnh9Ij0qZ7KMUyXVQoJmGxuhoeeq2lTos",
     authDomain: "thai-feee6.firebaseapp.com",
@@ -9,11 +8,11 @@ const firebaseConfig = {
     appId: "1:632113518491:web:4bbc9416b08f2a42d6333e"
 };
 
-// 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 데이터 저장 함수
+let currentItems = []; // 엑셀 출력을 위해 데이터를 보관할 변수
+
 function saveData() {
     const content = document.getElementById('content').value;
     const amount = document.getElementById('amount').value;
@@ -35,42 +34,59 @@ function saveData() {
     });
 }
 
-// 데이터 삭제 함수
 function deleteData(id) {
     if (confirm("정말 삭제하시겠습니까?")) {
-        db.ref('expenses/' + id).remove()
-        .then(() => {
-            alert("삭제되었습니다.");
-        })
-        .catch((error) => {
-            alert("삭제 실패: " + error.message);
-        });
+        db.ref('expenses/' + id).remove().then(() => { alert("삭제되었습니다."); });
     }
 }
 
-// 데이터 불러오기 및 실시간 업데이트
+// 엑셀(CSV) 내보내기 함수
+function exportToExcel() {
+    if (currentItems.length === 0) {
+        alert("내보낼 내역이 없습니다.");
+        return;
+    }
+
+    let csvContent = "\uFEFF날짜,내용,금액(Baht)\n"; // 한글 깨짐 방지 BOM 추가
+    
+    currentItems.forEach(item => {
+        const date = new Date(item.timestamp).toLocaleString('ko-KR').replace(/,/g, '');
+        csvContent += `${date},${item.content},${item.amount}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", "태국여행_가계부.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     const listDiv = document.getElementById('history-list');
     const totalSpan = document.getElementById('total-amount');
     
     listDiv.innerHTML = ''; 
     let totalSum = 0;
-    const items = [];
+    currentItems = []; // 초기화
 
-    // 데이터를 배열에 담으면서 총액 계산
     snapshot.forEach((childSnapshot) => {
-        const key = childSnapshot.key; // 데이터의 고유 ID
+        const key = childSnapshot.key;
         const val = childSnapshot.val();
-        items.push({ id: key, ...val });
+        currentItems.push({ id: key, ...val });
         totalSum += val.amount;
     });
 
     totalSpan.innerText = totalSum.toLocaleString();
 
-    // 최신순 정렬 후 화면 표시
-    items.reverse().forEach((item) => {
+    // 화면 표시용 (복사본 생성하여 뒤집기)
+    const displayItems = [...currentItems].reverse();
+    displayItems.forEach((item) => {
         const date = new Date(item.timestamp).toLocaleString('ko-KR');
-        
         listDiv.innerHTML += `
             <div class="item">
                 <div class="info">
@@ -81,7 +97,6 @@ db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
                     <span class="amount">${item.amount.toLocaleString()} ฿</span>
                     <button class="delete-btn" onclick="deleteData('${item.id}')">삭제</button>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
 });
