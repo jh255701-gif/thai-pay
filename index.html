@@ -8,6 +8,9 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -17,10 +20,14 @@
             <input type="text" id="content" placeholder="무엇을 샀나요? (예: 팟타이)">
             <input type="number" id="amount" placeholder="금액 (Baht)">
             <button onclick="saveData()">내역 추가</button>
-            <button onclick="exportToExcel()" class="export-btn">Excel로 내보내기</button>
+            
+            <div class="export-group">
+                <button onclick="exportToExcel()" class="excel-btn">Excel 저장</button>
+                <button onclick="exportToPDF()" class="pdf-btn">PDF 저장 (바로보기)</button>
+            </div>
         </div>
 
-        <div class="list-section">
+        <div class="list-section" id="print-area">
             <div class="list-header">
                 <h3>최신 지출 내역</h3>
                 <div class="total-box">

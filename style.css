@@ -1,3 +1,4 @@
+/* 기본 배경 및 폰트 설정 */
 body { 
     font-family: 'Malgun Gothic', sans-serif; 
     background-color: #f0f2f5; 
@@ -7,6 +8,7 @@ body {
     justify-content: center; 
 }
 
+/* 가계부 전체 박스 */
 .app-container { 
     width: 100%; 
     max-width: 450px; 
@@ -16,12 +18,14 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
 }
 
+/* 제목 스타일 */
 h1 { text-align: center; color: #0038A8; margin-bottom: 30px; }
 
+/* 입력창 및 버튼 섹션 */
 .input-section { 
     display: flex; 
     flex-direction: column; 
-    gap: 15px; 
+    gap: 12px; 
     margin-bottom: 30px; 
 }
 
@@ -44,14 +48,24 @@ button {
     cursor: pointer; 
 }
 
-/* 엑셀 내보내기 버튼 스타일 */
-.export-btn {
-    background-color: #217346; /* 엑셀 색상 */
-    margin-top: -5px;
-}
-
 button:active { opacity: 0.8; }
 
+/* 내보내기 버튼 그룹 (엑셀, PDF 나란히 배치) */
+.export-group { 
+    display: flex; 
+    gap: 10px; 
+}
+
+.export-group button { 
+    flex: 1; 
+    font-size: 14px; 
+    padding: 12px; 
+}
+
+.excel-btn { background-color: #217346; } /* 엑셀용 초록색 */
+.pdf-btn { background-color: #0038A8; }   /* PDF용 파란색 */
+
+/* 리스트 헤더 (제목 + 총액) */
 .list-header { 
     display: flex; 
     justify-content: space-between; 
@@ -61,9 +75,21 @@ button:active { opacity: 0.8; }
     margin-bottom: 10px; 
 }
 
-.total-box { font-size: 18px; font-weight: bold; color: #0038A8; }
-#total-amount { color: #ED1C24; font-size: 20px; }
+h3 { margin: 0; font-size: 18px; color: #333; }
 
+/* 총액 강조 스타일 */
+.total-box { 
+    font-size: 18px; 
+    font-weight: bold; 
+    color: #0038A8; 
+}
+
+#total-amount { 
+    color: #ED1C24; 
+    font-size: 20px;
+}
+
+/* 개별 내역 아이템 스타일 */
 .item { 
     display: flex; 
     justify-content: space-between; 
@@ -74,9 +100,20 @@ button:active { opacity: 0.8; }
 
 .info { display: flex; flex-direction: column; flex: 1; }
 .info .time { font-size: 11px; color: #999; margin-top: 4px; }
-.amount-group { display: flex; align-items: center; gap: 10px; }
-.amount { font-weight: bold; color: #d32f2f; font-size: 17px; }
 
+.amount-group { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+}
+
+.amount { 
+    font-weight: bold; 
+    color: #d32f2f; 
+    font-size: 17px; 
+}
+
+/* 삭제 버튼 스타일 */
 .delete-btn {
     background-color: #eee;
     color: #888;
@@ -85,4 +122,9 @@ button:active { opacity: 0.8; }
     border-radius: 5px;
     font-size: 11px;
     cursor: pointer;
+}
+
+.delete-btn:hover { 
+    background-color: #ffdada; 
+    color: #d32f2f; 
 }
