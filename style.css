@@ -8,7 +8,6 @@ h1 { text-align: center; color: #0038A8; margin-bottom: 30px; }
 .currency-toggle label { cursor: pointer; font-weight: bold; color: #555; }
 input { padding: 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
 
-/* 버튼 기본 스타일 */
 button { padding: 15px; background-color: #ED1C24; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
 
 /* 그래프 섹션 스타일 */
@@ -20,9 +19,9 @@ button { padding: 15px; background-color: #ED1C24; color: white; border: none; b
 .bar-label { width: 70px; font-size: 12px; font-weight: bold; color: #333; }
 .bar-outer { flex: 1; height: 16px; background-color: #e9ecef; border-radius: 8px; overflow: hidden; margin: 0 10px; }
 .bar-inner { height: 100%; transition: width 0.5s ease-in-out; }
-.bar-amount { width: 85px; font-size: 11px; text-align: right; color: #666; font-family: 'Consolas', monospace; }
+/* 퍼센트 표시를 위해 너비를 110px로 확장 */
+.bar-amount { width: 110px; font-size: 10px; text-align: right; color: #666; font-family: 'Consolas', monospace; }
 
-/* 내보내기 버튼 그룹 */
 .export-group { display: flex; gap: 10px; margin-top: 5px; }
 .export-group button { flex: 1; font-size: 14px; padding: 12px; }
 .excel-btn { background-color: #217346; } 
