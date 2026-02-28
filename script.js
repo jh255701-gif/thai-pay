@@ -1,3 +1,4 @@
+// Firebase 설정
 const firebaseConfig = {
     apiKey: "AIzaSyBnh9Ij0qZ7KMUyXVQoJmGxuhoeeq2lTos",
     authDomain: "thai-feee6.firebaseapp.com",
@@ -14,6 +15,7 @@ let currentItems = [];
 const EXCHANGE_RATE = 47.3; 
 let editTargetId = null;
 
+// 데이터 저장
 function saveData() {
     const category = document.getElementById('category').value;
     const content = document.getElementById('content').value;
@@ -31,6 +33,7 @@ function saveData() {
     });
 }
 
+// 통계 토글
 function toggleChart() {
     const container = document.getElementById('chart-container');
     const btn = document.getElementById('toggle-chart-btn');
@@ -40,43 +43,76 @@ function toggleChart() {
     } else {
         container.style.display = 'none';
         btn.innerText = '📊 카테고리별 통계 보기';
+        document.getElementById('category-details').style.display = 'none'; // 닫을 때 세부내역도 숨김
     }
 }
 
-// ★ 비중(%) 계산 기능이 추가된 그래프 업데이트 함수 ★
+// ★ 카테고리 세부 내역 보기 함수 (고액순) ★
+function showCategoryDetails(category) {
+    const detailsDiv = document.getElementById('category-details');
+    const listDiv = document.getElementById('details-list');
+    const title = document.getElementById('details-title');
+
+    // 해당 카테고리만 필터링 후 원화 계산하여 내림차순 정렬
+    const filtered = currentItems.filter(item => (item.category || '기타') === category)
+        .map(item => ({
+            ...item,
+            wonValue: (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount
+        }))
+        .sort((a, b) => b.wonValue - a.wonValue);
+
+    if (filtered.length === 0) return;
+
+    title.innerText = `🔍 ${category} 세부 내역 (고액순)`;
+    listDiv.innerHTML = '';
+    filtered.forEach(item => {
+        const originalPrice = item.currency === 'baht' ? `${item.amount.toLocaleString()}฿` : `${item.amount.toLocaleString()}원`;
+        listDiv.innerHTML += `
+            <div class="detail-item">
+                <span class="detail-name">${item.content}</span>
+                <span class="detail-price">${item.wonValue.toLocaleString()}원 <small>(${originalPrice})</small></span>
+            </div>`;
+    });
+
+    detailsDiv.style.display = 'block';
+}
+
+// 통계 그래프 업데이트
 function updateChart() {
     const categoryTotals = { '교통': 0, '먹거리': 0, '숙박': 0, '관광': 0, '기타': 0 };
     const colors = { '교통': '#3498db', '먹거리': '#e67e22', '숙박': '#9b59b6', '관광': '#2ecc71', '기타': '#95a5a6' };
     const emojis = { '교통': '🚗', '먹거리': '🍕', '숙박': '🏨', '관광': '📸', '기타': '💡' };
 
-    let grandTotalWon = 0; // 전체 지출 합계 (원화 기준)
+    const selectedCats = Array.from(document.querySelectorAll('.cat-filter:checked')).map(el => el.value);
+    let grandTotalWon = 0;
 
-    // 1. 카테고리별 합산 및 전체 합계 계산
     currentItems.forEach(item => {
         const wonValue = (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount;
         const cat = item.category || '기타';
         if (categoryTotals.hasOwnProperty(cat)) { 
             categoryTotals[cat] += wonValue;
-            grandTotalWon += wonValue;
         }
     });
 
-    // 2. 많이 쓴 순으로 정렬
-    const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
-    const maxCategoryTotal = Math.max(...Object.values(categoryTotals), 1); // 막대 비율용
+    selectedCats.forEach(cat => { grandTotalWon += categoryTotals[cat]; });
 
-    // 3. HTML 생성
-    const container = document.getElementById('chart-container');
-    container.innerHTML = '';
+    const sortedCategories = Object.entries(categoryTotals)
+        .filter(([cat]) => selectedCats.includes(cat))
+        .sort((a, b) => b[1] - a[1]);
+
+    const maxCategoryTotal = Math.max(...Object.values(categoryTotals).filter((v, i) => selectedCats.includes(Object.keys(categoryTotals)[i])), 1);
+
+    const barsContainer = document.getElementById('chart-bars');
+    barsContainer.innerHTML = '';
     
     sortedCategories.forEach(([category, total]) => {
         if (total === 0) return;
+        const barWidth = (total / maxCategoryTotal) * 100;
+        const sharePercent = grandTotalWon > 0 ? ((total / grandTotalWon) * 100).toFixed(1) : 0;
         
-        const barWidth = (total / maxCategoryTotal) * 100; // 막대 길이 비율
-        const sharePercent = ((total / grandTotalWon) * 100).toFixed(1); // 전체 지출 중 비중 (%)
-        
-        container.innerHTML += `
-            <div class="bar-row">
+        // ★ 클릭 시 세부 내역 함수 실행 ★
+        barsContainer.innerHTML += `
+            <div class="bar-row" onclick="showCategoryDetails('${category}')">
                 <div class="bar-label">${emojis[category]} ${category}</div>
                 <div class="bar-outer">
                     <div class="bar-inner" style="width: ${barWidth}%; background-color: ${colors[category]};"></div>
@@ -157,6 +193,7 @@ async function exportToPDF() {
     });
 }
 
+// 데이터 리스너
 db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     const listDiv = document.getElementById('history-list');
     const totalWonSpan = document.getElementById('total-won');
@@ -174,7 +211,7 @@ db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     totalWonSpan.innerText = Math.round(totalWonSum).toLocaleString();
     totalBahtSub.innerText = `(바트 지출만 합산: ${totalBahtOnly.toLocaleString()} ฿)`;
     
-    updateChart(); // 데이터 변경 시 그래프도 갱신
+    updateChart(); 
 
     [...currentItems].reverse().forEach((item) => {
         const date = new Date(item.timestamp).toLocaleString('ko-KR');
