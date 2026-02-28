@@ -12,7 +12,7 @@
         }
     </script>
     
-    <link rel="stylesheet" href="style.css?v=1.4">
+    <link rel="stylesheet" href="style.css?v=1.6">
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
@@ -38,7 +38,14 @@
                 <label><input type="radio" name="currency" value="won"> ₩ 원화</label>
             </div>
             <input type="number" id="amount" placeholder="금액을 입력하세요">
-            <button onclick="saveData()">내역 추가</button>
+            
+            <button onclick="saveData()" class="add-btn">내역 추가</button>
+
+            <div class="chart-section">
+                <button id="toggle-chart-btn" onclick="toggleChart()" class="toggle-btn">📊 카테고리별 통계 보기</button>
+                <div id="chart-container" class="chart-container" style="display: none;">
+                    </div>
+            </div>
             
             <div class="export-group">
                 <button onclick="exportToExcel()" class="excel-btn">Excel 저장</button>
@@ -82,6 +89,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=1.4"></script>
+    <script src="script.js?v=1.6"></script>
 </body>
 </html>

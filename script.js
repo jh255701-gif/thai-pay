@@ -14,7 +14,6 @@ let currentItems = [];
 const EXCHANGE_RATE = 47.3; 
 let editTargetId = null;
 
-// 데이터 저장
 function saveData() {
     const category = document.getElementById('category').value;
     const content = document.getElementById('content').value;
@@ -28,36 +27,70 @@ function saveData() {
         alert("입력되었습니다!"); 
         document.getElementById('content').value = ''; 
         document.getElementById('amount').value = ''; 
+        document.getElementById('category').value = '기타';
     });
 }
 
-// ★ 수정 모달 열기 (방어 코드 추가) ★
+function toggleChart() {
+    const container = document.getElementById('chart-container');
+    const btn = document.getElementById('toggle-chart-btn');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+        btn.innerText = '🔼 통계 접기';
+    } else {
+        container.style.display = 'none';
+        btn.innerText = '📊 카테고리별 통계 보기';
+    }
+}
+
+function updateChart() {
+    const categoryTotals = { '교통': 0, '먹거리': 0, '숙박': 0, '관광': 0, '기타': 0 };
+    const colors = { '교통': '#3498db', '먹거리': '#e67e22', '숙박': '#9b59b6', '관광': '#2ecc71', '기타': '#95a5a6' };
+    const emojis = { '교통': '🚗', '먹거리': '🍕', '숙박': '🏨', '관광': '📸', '기타': '💡' };
+
+    currentItems.forEach(item => {
+        const wonValue = (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount;
+        const cat = item.category || '기타';
+        if (categoryTotals.hasOwnProperty(cat)) { categoryTotals[cat] += wonValue; }
+    });
+
+    const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+    const maxTotal = Math.max(...Object.values(categoryTotals), 1);
+
+    const container = document.getElementById('chart-container');
+    container.innerHTML = '';
+    
+    sortedCategories.forEach(([category, total]) => {
+        if (total === 0) return;
+        const percentage = (total / maxTotal) * 100;
+        container.innerHTML += `
+            <div class="bar-row">
+                <div class="bar-label">${emojis[category]} ${category}</div>
+                <div class="bar-outer">
+                    <div class="bar-inner" style="width: ${percentage}%; background-color: ${colors[category]};"></div>
+                </div>
+                <div class="bar-amount">${total.toLocaleString()}원</div>
+            </div>`;
+    });
+}
+
 function openEditModal(id) {
     const item = currentItems.find(i => i.id === id);
     if (!item) return;
-    
     editTargetId = id;
     document.getElementById('edit-category').value = item.category || '기타';
     document.getElementById('edit-content').value = item.content || '';
     document.getElementById('edit-amount').value = item.amount || 0;
-    
-    // 예전 데이터에 화폐 정보가 없을 경우 'baht'를 기본값으로 설정
     const currencyVal = item.currency || 'baht';
     const radioBtn = document.querySelector(`input[name="edit-currency"][value="${currencyVal}"]`);
     if (radioBtn) radioBtn.checked = true;
-    
-    // 시간 변환
     const date = new Date(item.timestamp || Date.now());
     date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     document.getElementById('edit-time').value = date.toISOString().slice(0, 16);
-    
     document.getElementById('edit-modal').style.display = 'block';
 }
 
-function closeModal() {
-    document.getElementById('edit-modal').style.display = 'none';
-    editTargetId = null;
-}
+function closeModal() { document.getElementById('edit-modal').style.display = 'none'; editTargetId = null; }
 
 function updateData() {
     const category = document.getElementById('edit-category').value;
@@ -65,23 +98,16 @@ function updateData() {
     const amount = document.getElementById('edit-amount').value;
     const timeValue = document.getElementById('edit-time').value;
     const currency = document.querySelector('input[name="edit-currency"]:checked').value;
-
     if (!content || !amount || !timeValue) { alert("모든 항목을 입력해주세요!"); return; }
     const newTimestamp = new Date(timeValue).getTime();
-
     db.ref('expenses/' + editTargetId).update({
         category: category, content: content, amount: Number(amount),
         currency: currency, timestamp: newTimestamp
-    }).then(() => {
-        alert("수정되었습니다.");
-        closeModal();
-    });
+    }).then(() => { alert("수정되었습니다."); closeModal(); });
 }
 
 function deleteData(id) {
-    if (confirm("정말 삭제하시겠습니까?")) { 
-        db.ref('expenses/' + id).remove().then(() => { alert("삭제되었습니다."); }); 
-    }
+    if (confirm("정말 삭제하시겠습니까?")) { db.ref('expenses/' + id).remove().then(() => { alert("삭제되었습니다."); }); }
 }
 
 function exportToExcel() {
@@ -135,13 +161,12 @@ db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     });
     totalWonSpan.innerText = Math.round(totalWonSum).toLocaleString();
     totalBahtSub.innerText = `(바트 지출만 합산: ${totalBahtOnly.toLocaleString()} ฿)`;
-
+    updateChart();
     [...currentItems].reverse().forEach((item) => {
         const date = new Date(item.timestamp).toLocaleString('ko-KR');
         const currency = item.currency || 'baht';
         let mainDisplay = currency === 'baht' ? `${item.amount.toLocaleString()} ฿` : `${item.amount.toLocaleString()} 원`;
         let subDisplay = currency === 'baht' ? `(${Math.round(item.amount * EXCHANGE_RATE).toLocaleString()}원)` : "";
-        
         listDiv.innerHTML += `
             <div class="item">
                 <div class="info">
