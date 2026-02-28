@@ -44,11 +44,11 @@ function toggleChart() {
     }
 }
 
-// ★ 세부 내역 보기 함수 (시간 표시 추가) ★
 function showCategoryDetails(category) {
     const detailsDiv = document.getElementById('category-details');
     const listDiv = document.getElementById('details-list');
     const title = document.getElementById('details-title');
+    const totalDiv = document.getElementById('details-total');
 
     const filtered = currentItems.filter(item => (item.category || '기타') === category)
         .map(item => ({
@@ -59,12 +59,13 @@ function showCategoryDetails(category) {
 
     if (filtered.length === 0) return;
 
-    title.innerText = `🔍 ${category} 세부 내역 (고액순)`;
+    let categoryTotalSum = 0;
+    title.innerText = `🔍 ${category} 세부 내역`;
     listDiv.innerHTML = '';
     
     filtered.forEach(item => {
+        categoryTotalSum += item.wonValue;
         const originalPrice = item.currency === 'baht' ? `${item.amount.toLocaleString()}฿` : `${item.amount.toLocaleString()}원`;
-        // 타임스탬프를 읽기 쉬운 날짜와 시간으로 변환
         const dateStr = new Date(item.timestamp).toLocaleString('ko-KR');
         
         listDiv.innerHTML += `
@@ -73,20 +74,23 @@ function showCategoryDetails(category) {
                     <span class="detail-name">${item.content}</span>
                     <span class="detail-price">${item.wonValue.toLocaleString()}원 <small>(${originalPrice})</small></span>
                 </div>
-                <div class="detail-time">${dateStr}</div> </div>`;
+                <div class="detail-time">${dateStr}</div>
+            </div>`;
     });
 
+    totalDiv.innerText = `합계: ${categoryTotalSum.toLocaleString()}원`;
     detailsDiv.style.display = 'block';
 }
 
+// ★ 필터링된 항목들만의 합계를 계산하여 보여주는 통계 함수 ★
 function updateChart() {
     const categoryTotals = { '교통': 0, '먹거리': 0, '숙박': 0, '관광': 0, '기타': 0 };
     const colors = { '교통': '#3498db', '먹거리': '#e67e22', '숙박': '#9b59b6', '관광': '#2ecc71', '기타': '#95a5a6' };
     const emojis = { '교통': '🚗', '먹거리': '🍕', '숙박': '🏨', '관광': '📸', '기타': '💡' };
 
     const selectedCats = Array.from(document.querySelectorAll('.cat-filter:checked')).map(el => el.value);
-    let filteredGrandTotal = 0;
-
+    
+    // 1. 카테고리별 합산 수행
     currentItems.forEach(item => {
         const wonValue = (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount;
         const cat = item.category || '기타';
@@ -95,8 +99,17 @@ function updateChart() {
         }
     });
 
-    selectedCats.forEach(cat => { filteredGrandTotal += categoryTotals[cat]; });
+    // 2. ★ 체크된 항목들만의 총합 계산 (이 금액이 비중 계산의 기준이 됨) ★
+    let filteredGrandTotal = 0;
+    selectedCats.forEach(cat => {
+        filteredGrandTotal += categoryTotals[cat];
+    });
 
+    // 화면 상단에 필터링된 합계 표시
+    const filteredTotalDisplay = document.getElementById('filtered-total-display');
+    filteredTotalDisplay.innerText = `선택 항목 합계: ${filteredGrandTotal.toLocaleString()}원`;
+
+    // 3. 필터링 및 정렬 (체크된 것만 표시)
     const sortedCategories = Object.entries(categoryTotals)
         .filter(([cat]) => selectedCats.includes(cat))
         .sort((a, b) => b[1] - a[1]);
@@ -109,6 +122,7 @@ function updateChart() {
     sortedCategories.forEach(([category, total]) => {
         if (total === 0) return;
         const barWidth = (total / maxCategoryTotal) * 100;
+        // 필터링된 합계 대비 비중 계산
         const sharePercent = filteredGrandTotal > 0 ? ((total / filteredGrandTotal) * 100).toFixed(1) : 0;
         
         barsContainer.innerHTML += `

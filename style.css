@@ -15,8 +15,20 @@ button { padding: 15px; background-color: #ED1C24; color: white; border: none; b
 .toggle-btn { width: 100%; background-color: #f1f3f5; color: #495057; font-size: 14px; padding: 12px; border-radius: 10px; border: 1px solid #dee2e6; cursor: pointer; }
 .chart-container { background: #fdfdfd; padding: 15px; border-radius: 15px; border: 1px solid #eee; margin-top: 10px; }
 
-.filter-wrapper { display: flex; justify-content: space-between; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px dashed #ddd; }
-.filter-wrapper label { font-size: 16px; cursor: pointer; display: flex; align-items: center; }
+.filter-wrapper { display: flex; justify-content: space-around; padding-bottom: 10px; margin-bottom: 5px; border-bottom: 1px dashed #ddd; }
+.filter-wrapper label { font-size: 18px; cursor: pointer; display: flex; align-items: center; }
+
+/* 선택된 카테고리 합계 스타일 */
+.filtered-total {
+    text-align: right;
+    font-size: 14px;
+    font-weight: bold;
+    color: #0038A8;
+    margin-bottom: 15px;
+    padding: 5px 10px;
+    background: #eef2ff;
+    border-radius: 5px;
+}
 
 .bar-row { display: flex; align-items: center; margin-bottom: 12px; cursor: pointer; padding: 4px; border-radius: 8px; transition: background 0.2s; }
 .bar-row:hover { background-color: #f1f3f5; }
@@ -25,14 +37,16 @@ button { padding: 15px; background-color: #ED1C24; color: white; border: none; b
 .bar-inner { height: 100%; transition: width 0.5s ease-in-out; }
 .bar-amount { width: 110px; font-size: 10px; text-align: right; color: #666; font-family: 'Consolas', monospace; }
 
-/* 세부 내역 스타일 */
 .category-details { margin-top: 20px; padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; }
-.category-details h4 { margin: 0 0 10px 0; font-size: 14px; color: #0038A8; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+.details-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
+.category-details h4 { margin: 0; font-size: 14px; color: #0038A8; }
+.details-total { font-size: 12px; font-weight: bold; color: #d32f2f; }
+
 .detail-item { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
 .detail-main { display: flex; justify-content: space-between; align-items: center; }
 .detail-name { font-size: 13px; color: #333; font-weight: bold; }
 .detail-price { font-size: 13px; color: #d32f2f; font-weight: bold; }
-.detail-time { font-size: 10px; color: #999; margin-top: 3px; } /* 시간 표시 스타일 */
+.detail-time { font-size: 10px; color: #999; margin-top: 3px; }
 
 .export-group { display: flex; gap: 10px; margin-top: 5px; }
 .export-group button { flex: 1; font-size: 14px; padding: 12px; }

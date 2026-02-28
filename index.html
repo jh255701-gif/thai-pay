@@ -12,7 +12,7 @@
         }
     </script>
     
-    <link rel="stylesheet" href="style.css?v=2.0">
+    <link rel="stylesheet" href="style.css?v=2.2">
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
@@ -51,10 +51,16 @@
                         <label><input type="checkbox" class="cat-filter" value="관광" checked onchange="updateChart()"> 📸</label>
                         <label><input type="checkbox" class="cat-filter" value="기타" checked onchange="updateChart()"> 💡</label>
                     </div>
+                    
+                    <div id="filtered-total-display" class="filtered-total"></div>
+
                     <div id="chart-bars"></div>
                     
                     <div id="category-details" class="category-details" style="display:none;">
-                        <h4 id="details-title">세부 내역</h4>
+                        <div class="details-header">
+                            <h4 id="details-title">세부 내역</h4>
+                            <div id="details-total" class="details-total"></div>
+                        </div>
                         <div id="details-list"></div>
                     </div>
                 </div>
@@ -102,6 +108,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=2.0"></script>
+    <script src="script.js?v=2.2"></script>
 </body>
 </html>
