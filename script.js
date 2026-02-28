@@ -1,4 +1,3 @@
-// Firebase 설정
 const firebaseConfig = {
     apiKey: "AIzaSyBnh9Ij0qZ7KMUyXVQoJmGxuhoeeq2lTos",
     authDomain: "thai-feee6.firebaseapp.com",
@@ -15,7 +14,6 @@ let currentItems = [];
 const EXCHANGE_RATE = 47.3; 
 let editTargetId = null;
 
-// 데이터 저장
 function saveData() {
     const category = document.getElementById('category').value;
     const content = document.getElementById('content').value;
@@ -33,7 +31,6 @@ function saveData() {
     });
 }
 
-// 통계 토글
 function toggleChart() {
     const container = document.getElementById('chart-container');
     const btn = document.getElementById('toggle-chart-btn');
@@ -43,17 +40,16 @@ function toggleChart() {
     } else {
         container.style.display = 'none';
         btn.innerText = '📊 카테고리별 통계 보기';
-        document.getElementById('category-details').style.display = 'none'; // 닫을 때 세부내역도 숨김
+        document.getElementById('category-details').style.display = 'none';
     }
 }
 
-// ★ 카테고리 세부 내역 보기 함수 (고액순) ★
+// ★ 세부 내역 보기 함수 (시간 표시 추가) ★
 function showCategoryDetails(category) {
     const detailsDiv = document.getElementById('category-details');
     const listDiv = document.getElementById('details-list');
     const title = document.getElementById('details-title');
 
-    // 해당 카테고리만 필터링 후 원화 계산하여 내림차순 정렬
     const filtered = currentItems.filter(item => (item.category || '기타') === category)
         .map(item => ({
             ...item,
@@ -65,26 +61,31 @@ function showCategoryDetails(category) {
 
     title.innerText = `🔍 ${category} 세부 내역 (고액순)`;
     listDiv.innerHTML = '';
+    
     filtered.forEach(item => {
         const originalPrice = item.currency === 'baht' ? `${item.amount.toLocaleString()}฿` : `${item.amount.toLocaleString()}원`;
+        // 타임스탬프를 읽기 쉬운 날짜와 시간으로 변환
+        const dateStr = new Date(item.timestamp).toLocaleString('ko-KR');
+        
         listDiv.innerHTML += `
             <div class="detail-item">
-                <span class="detail-name">${item.content}</span>
-                <span class="detail-price">${item.wonValue.toLocaleString()}원 <small>(${originalPrice})</small></span>
-            </div>`;
+                <div class="detail-main">
+                    <span class="detail-name">${item.content}</span>
+                    <span class="detail-price">${item.wonValue.toLocaleString()}원 <small>(${originalPrice})</small></span>
+                </div>
+                <div class="detail-time">${dateStr}</div> </div>`;
     });
 
     detailsDiv.style.display = 'block';
 }
 
-// 통계 그래프 업데이트
 function updateChart() {
     const categoryTotals = { '교통': 0, '먹거리': 0, '숙박': 0, '관광': 0, '기타': 0 };
     const colors = { '교통': '#3498db', '먹거리': '#e67e22', '숙박': '#9b59b6', '관광': '#2ecc71', '기타': '#95a5a6' };
     const emojis = { '교통': '🚗', '먹거리': '🍕', '숙박': '🏨', '관광': '📸', '기타': '💡' };
 
     const selectedCats = Array.from(document.querySelectorAll('.cat-filter:checked')).map(el => el.value);
-    let grandTotalWon = 0;
+    let filteredGrandTotal = 0;
 
     currentItems.forEach(item => {
         const wonValue = (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount;
@@ -94,7 +95,7 @@ function updateChart() {
         }
     });
 
-    selectedCats.forEach(cat => { grandTotalWon += categoryTotals[cat]; });
+    selectedCats.forEach(cat => { filteredGrandTotal += categoryTotals[cat]; });
 
     const sortedCategories = Object.entries(categoryTotals)
         .filter(([cat]) => selectedCats.includes(cat))
@@ -108,9 +109,8 @@ function updateChart() {
     sortedCategories.forEach(([category, total]) => {
         if (total === 0) return;
         const barWidth = (total / maxCategoryTotal) * 100;
-        const sharePercent = grandTotalWon > 0 ? ((total / grandTotalWon) * 100).toFixed(1) : 0;
+        const sharePercent = filteredGrandTotal > 0 ? ((total / filteredGrandTotal) * 100).toFixed(1) : 0;
         
-        // ★ 클릭 시 세부 내역 함수 실행 ★
         barsContainer.innerHTML += `
             <div class="bar-row" onclick="showCategoryDetails('${category}')">
                 <div class="bar-label">${emojis[category]} ${category}</div>
@@ -193,7 +193,6 @@ async function exportToPDF() {
     });
 }
 
-// 데이터 리스너
 db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     const listDiv = document.getElementById('history-list');
     const totalWonSpan = document.getElementById('total-won');
