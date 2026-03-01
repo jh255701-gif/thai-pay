@@ -8,17 +8,25 @@ h1 { text-align: center; color: #0038A8; margin-bottom: 30px; }
 .currency-toggle label { cursor: pointer; font-weight: bold; color: #555; }
 input { padding: 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
 
-/* 사진 입력 및 미리보기 스타일 */
 .file-input-wrapper { margin-top: 5px; }
 .file-label { display: block; padding: 10px; background: #f1f3f5; border: 1px dashed #adb5bd; border-radius: 8px; text-align: center; font-size: 14px; cursor: pointer; color: #495057; }
-#image-input { display: none; }
-.preview-container { display: flex; gap: 10px; margin-top: 10px; }
+#image-input, #edit-image-input { display: none; }
+.preview-container { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #eee; }
 
-button { padding: 15px; background-color: #ED1C24; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
-button:disabled { background-color: #ccc; cursor: not-allowed; }
+.add-btn { padding: 15px; background-color: #ED1C24; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+.add-btn:disabled, .save-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 
-/* 통계 스타일 */
+.export-group { display: flex; gap: 10px; margin-top: 10px; }
+.export-group button { flex: 1; font-size: 14px; padding: 12px; font-weight: bold; color: white; border: none; border-radius: 10px; cursor: pointer; }
+.excel-btn { background-color: #217346 !important; }
+.pdf-btn { background-color: #0038A8 !important; }
+
+/* 사진 보기 버튼 (박스 테두리 없음) */
+.photo-toggle-btn { background: none; border: none; padding: 0; color: #666; font-size: 12px; cursor: pointer; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline; }
+.item-images { display: none; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+.item-img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid #eee; }
+
 .chart-section { margin-top: 5px; }
 .toggle-btn { width: 100%; background-color: #f1f3f5; color: #495057; font-size: 14px; padding: 12px; border-radius: 10px; border: 1px solid #dee2e6; cursor: pointer; }
 .chart-container { background: #fdfdfd; padding: 15px; border-radius: 15px; border: 1px solid #eee; margin-top: 10px; }
@@ -26,14 +34,13 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 .filter-wrapper label { font-size: 18px; cursor: pointer; display: flex; align-items: center; }
 .filtered-total { text-align: right; font-size: 14px; font-weight: bold; color: #0038A8; margin-bottom: 15px; padding: 5px 10px; background: #eef2ff; border-radius: 5px; }
 
-.bar-row { display: flex; align-items: center; margin-bottom: 12px; cursor: pointer; padding: 4px; border-radius: 8px; transition: background 0.2s; }
+.bar-row { display: flex; align-items: center; margin-bottom: 12px; cursor: pointer; padding: 4px; border-radius: 8px; }
 .bar-row:hover { background-color: #f1f3f5; }
 .bar-label { width: 70px; font-size: 12px; font-weight: bold; color: #333; }
 .bar-outer { flex: 1; height: 16px; background-color: #e9ecef; border-radius: 8px; overflow: hidden; margin: 0 10px; }
 .bar-inner { height: 100%; transition: width 0.5s ease-in-out; }
 .bar-amount { width: 110px; font-size: 10px; text-align: right; color: #666; font-family: 'Consolas', monospace; }
 
-/* 세부 내역 및 리스트 내 사진 스타일 */
 .category-details { margin-top: 20px; padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; }
 .details-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; }
 .details-sort-group { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
@@ -41,13 +48,9 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 
 .detail-item { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
 .detail-main { display: flex; justify-content: space-between; align-items: center; }
-.item-images { display: flex; gap: 5px; margin-top: 5px; }
-.item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 5px; cursor: pointer; }
-
-.export-group { display: flex; gap: 10px; margin-top: 5px; }
-.export-group button { flex: 1; font-size: 14px; padding: 12px; }
-.excel-btn { background-color: #217346; } 
-.pdf-btn { background-color: #0038A8; }   
+.detail-name { font-size: 13px; color: #333; font-weight: bold; }
+.detail-price { font-size: 13px; color: #d32f2f; font-weight: bold; }
+.detail-time { font-size: 10px; color: #999; margin-top: 3px; }
 
 .list-header { display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #eee; padding-top: 20px; margin-top: 20px; padding-bottom: 10px; margin-bottom: 10px; }
 .total-box { font-size: 18px; font-weight: bold; color: #ED1C24; text-align: right; }
@@ -71,6 +74,8 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 .delete-btn { background-color: #eee; color: #888; border: none; padding: 4px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; }
 
 .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-.modal-content { background-color: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 80%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+.modal-content { background-color: white; margin: 10% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; max-height: 80vh; overflow-y: auto; }
 .modal-btns { display: flex; gap: 10px; margin-top: 10px; }
-.modal-btns button { flex: 1; font-size: 16px; padding: 12px; }
+.modal-btns button { flex: 1; font-size: 16px; padding: 12px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; }
+.save-btn { background-color: #0038A8; color: white; }
+.cancel-btn { background-color: #95a5a6; color: white; }
