@@ -21,7 +21,7 @@ function openImageModal(url) {
 }
 function closeImageModal() { document.getElementById('image-modal').style.display = 'none'; }
 
-// 리스트 내 사진 펼치기/접기
+// 리스트 내 사진 펼치기/접기 (메인 및 세부내역 공용)
 function toggleImages(id) {
     const imgDiv = document.getElementById(`img-box-${id}`);
     const btn = document.getElementById(`img-btn-${id}`);
@@ -101,17 +101,24 @@ function toggleChart() {
     else { c.style.display = 'none'; b.innerText = '📊 카테고리별 통계 보기'; document.getElementById('category-details').style.display = 'none'; }
 }
 
+// 세부 내역 렌더링 함수 (사진 보기 버튼 로직 추가)
 function renderDetailItems() {
     const listDiv = document.getElementById('details-list');
     listDiv.innerHTML = '';
     currentDetailItems.forEach(item => {
-        const originalPrice = item.currency === 'baht' ? `${item.amount.toLocaleString()}฿` : `${item.amount.toLocaleString()}원`;
+        const detailId = 'detail-' + item.id;
+        let imgBtn = (item.imageUrls || []).length > 0 ? `<button class="photo-toggle-btn" id="img-btn-${detailId}" onclick="toggleImages('${detailId}')">📷 사진 보기</button>` : "";
         let imgHtml = (item.imageUrls || []).map(url => `<img src="${url}" class="item-img" onclick="openImageModal('${url}')">`).join('');
+        
         listDiv.innerHTML += `
-            <div class="detail-item">
-                <div class="detail-main"><strong>${item.content}</strong><span class="detail-price">${item.wonValue.toLocaleString()}원</span></div>
-                <div class="detail-time">${new Date(item.timestamp).toLocaleString('ko-KR')}</div>
-                <div class="item-images" style="display:flex;">${imgHtml}</div>
+            <div class="detail-item" style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                <div class="detail-main" style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${item.content}</strong>
+                    <span class="detail-price" style="color: #d32f2f; font-weight: bold;">${item.wonValue.toLocaleString()}원</span>
+                </div>
+                <div class="detail-time" style="font-size: 11px; color: #999; margin-top: 4px;">${new Date(item.timestamp).toLocaleString('ko-KR')}</div>
+                ${imgBtn}
+                <div class="item-images" id="img-box-${detailId}" style="display:none; gap:5px; margin-top:8px;">${imgHtml}</div>
             </div>`;
     });
 }
