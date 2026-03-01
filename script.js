@@ -12,13 +12,26 @@ const db = firebase.database();
 let currentItems = [];
 const EXCHANGE_RATE = 47.3; 
 let currentDetailItems = [];
-let editTargetId = null;
-let currentEditImages = []; // 현재 수정 중인 항목의 기존 사진들
 
-function togglePhotos(btn) {
-    const photoDiv = btn.nextElementSibling;
-    if (photoDiv.style.display === 'flex') { photoDiv.style.display = 'none'; btn.innerHTML = '🖼️ 사진 보기'; }
-    else { photoDiv.style.display = 'flex'; btn.innerHTML = '📂 사진 접기'; }
+// 이미지 크게 보기 (팝업)
+function openImageModal(url) {
+    const modal = document.getElementById('image-modal');
+    document.getElementById('modal-img-src').src = url;
+    modal.style.display = 'flex';
+}
+function closeImageModal() { document.getElementById('image-modal').style.display = 'none'; }
+
+// 리스트 내 사진 펼치기/접기
+function toggleImages(id) {
+    const imgDiv = document.getElementById(`img-box-${id}`);
+    const btn = document.getElementById(`img-btn-${id}`);
+    if (imgDiv.style.display === 'none' || imgDiv.style.display === '') {
+        imgDiv.style.display = 'flex';
+        btn.innerText = '📂 사진 접기';
+    } else {
+        imgDiv.style.display = 'none';
+        btn.innerText = '📷 사진 보기';
+    }
 }
 
 function resizeImage(file) {
@@ -42,10 +55,9 @@ function resizeImage(file) {
     });
 }
 
-// 사진 미리보기 통합 함수
-function previewImages(inputId, containerId) {
-    const input = document.getElementById(inputId);
-    const container = document.getElementById(containerId);
+function previewImages() {
+    const input = document.getElementById('image-input');
+    const container = document.getElementById('image-preview-container');
     container.innerHTML = '';
     if (input.files.length > 2) { alert("사진은 최대 2장까지만 선택 가능합니다."); input.value = ''; return; }
     Array.from(input.files).forEach(file => {
@@ -66,6 +78,7 @@ async function saveData() {
     const imageInput = document.getElementById('image-input');
     const saveBtn = document.getElementById('save-btn');
     if (!content || !amount) { alert("내용과 금액을 입력해주세요!"); return; }
+    
     saveBtn.disabled = true; saveBtn.innerText = "처리 중...";
     let imageUrls = [];
     try {
@@ -93,16 +106,12 @@ function renderDetailItems() {
     listDiv.innerHTML = '';
     currentDetailItems.forEach(item => {
         const originalPrice = item.currency === 'baht' ? `${item.amount.toLocaleString()}฿` : `${item.amount.toLocaleString()}원`;
-        const dateStr = new Date(item.timestamp).toLocaleString('ko-KR');
-        let imgHtml = ''; let btnHtml = '';
-        if (item.imageUrls && item.imageUrls.length > 0) {
-            btnHtml = `<button class="photo-toggle-btn" onclick="togglePhotos(this)">🖼️ 사진 보기</button>`;
-            imgHtml = `<div class="item-images">` + (item.imageUrls).map(url => `<img src="${url}" class="item-img" onclick="window.open('${url}')">`).join('') + `</div>`;
-        }
+        let imgHtml = (item.imageUrls || []).map(url => `<img src="${url}" class="item-img" onclick="openImageModal('${url}')">`).join('');
         listDiv.innerHTML += `
             <div class="detail-item">
-                <div class="detail-main"><span class="detail-name">${item.content}</span><span class="detail-price">${item.wonValue.toLocaleString()}원 <small>(${originalPrice})</small></span></div>
-                <div class="detail-time">${dateStr}</div>${btnHtml}${imgHtml}
+                <div class="detail-main"><strong>${item.content}</strong><span class="detail-price">${item.wonValue.toLocaleString()}원</span></div>
+                <div class="detail-time">${new Date(item.timestamp).toLocaleString('ko-KR')}</div>
+                <div class="item-images" style="display:flex;">${imgHtml}</div>
             </div>`;
     });
 }
@@ -141,8 +150,7 @@ function updateChart() {
     document.getElementById('filtered-total-display').innerText = `선택 항목 합계: ${filteredSum.toLocaleString()}원`;
     const sorted = Object.entries(totals).filter(([c]) => selected.includes(c)).sort((a,b) => b[1]-a[1]);
     const max = Math.max(...Object.values(totals).filter((v,i) => selected.includes(Object.keys(totals)[i])), 1);
-    const container = document.getElementById('chart-bars');
-    container.innerHTML = '';
+    const container = document.getElementById('chart-bars'); container.innerHTML = '';
     sorted.forEach(([cat, total]) => {
         if (total === 0) return;
         const width = (total / max) * 100;
@@ -156,68 +164,27 @@ function updateChart() {
     });
 }
 
-// 수정 모달 열기 (사진 표시 로직 추가)
 function openEditModal(id) {
     const item = currentItems.find(i => i.id === id); if (!item) return;
-    editTargetId = id;
     document.getElementById('edit-category').value = item.category || '기타';
     document.getElementById('edit-content').value = item.content;
     document.getElementById('edit-amount').value = item.amount;
     document.querySelector(`input[name="edit-currency"][value="${item.currency || 'baht'}"]`).checked = true;
-    
-    const date = new Date(item.timestamp);
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    const date = new Date(item.timestamp); date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     document.getElementById('edit-time').value = date.toISOString().slice(0, 16);
-    
-    // 기존 사진 미리보기 표시
-    const previewContainer = document.getElementById('edit-image-preview');
-    previewContainer.innerHTML = '';
-    currentEditImages = item.imageUrls || [];
-    currentEditImages.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url; img.className = 'preview-img'; previewContainer.appendChild(img);
-    });
-
-    document.getElementById('edit-image-input').value = '';
     document.getElementById('edit-modal').style.display = 'block';
+    window.editTargetId = id;
 }
-
 function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
-
-// 수정 데이터 저장 (사진 업데이트 로직 포함)
-async function updateData() {
+function updateData() {
     const cat = document.getElementById('edit-category').value;
     const con = document.getElementById('edit-content').value;
     const amo = document.getElementById('edit-amount').value;
     const tim = document.getElementById('edit-time').value;
     const cur = document.querySelector('input[name="edit-currency"]:checked').value;
-    const imgInput = document.getElementById('edit-image-input');
-    const updateBtn = document.getElementById('update-btn');
-
-    if (!con || !amo || !tim) return;
-    updateBtn.disabled = true; updateBtn.innerText = "업데이트 중...";
-
-    let finalImages = currentEditImages;
-
-    try {
-        // 새로 선택된 사진이 있으면 압축하여 대체
-        if (imgInput.files.length > 0) {
-            const resizePromises = Array.from(imgInput.files).map(file => resizeImage(file));
-            finalImages = await Promise.all(resizePromises);
-        }
-
-        await db.ref('expenses/' + editTargetId).update({
-            category: cat, content: con, amount: Number(amo),
-            currency: cur, timestamp: new Date(tim).getTime(),
-            imageUrls: finalImages
-        });
-        
-        alert("수정되었습니다.");
-        closeModal();
-    } catch (e) { alert("수정 실패: " + e.message); }
-    finally { updateBtn.disabled = false; updateBtn.innerText = "수정 완료"; }
+    db.ref('expenses/' + window.editTargetId).update({ category: cat, content: con, amount: Number(amo), currency: cur, timestamp: new Date(tim).getTime() })
+    .then(() => { alert("수정되었습니다."); closeModal(); });
 }
-
 function deleteData(id) { if (confirm("정말 삭제하시겠습니까?")) db.ref('expenses/' + id).remove(); }
 
 function exportToExcel() {
@@ -228,8 +195,7 @@ function exportToExcel() {
         const won = (i.currency === 'baht' ? Math.round(i.amount * EXCHANGE_RATE) : i.amount);
         csv += `${d},${i.category || '기타'},${i.content},${i.amount},${i.currency === 'baht' ? '฿' : '₩'},${won}\n`;
     });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     link.download = "태국여행_가계부.csv"; link.click();
 }
 
@@ -249,14 +215,20 @@ db.ref('expenses').orderByChild('timestamp').on('value', (s) => {
         const d = new Date(i.timestamp).toLocaleString('ko-KR');
         const main = i.currency === 'baht' ? `${i.amount.toLocaleString()} ฿` : `${i.amount.toLocaleString()} 원`;
         const sub = i.currency === 'baht' ? `(${Math.round(i.amount * EXCHANGE_RATE).toLocaleString()}원)` : "";
-        let imgHtml = ''; let btnHtml = '';
-        if (i.imageUrls && i.imageUrls.length > 0) {
-            btnHtml = `<button class="photo-toggle-btn" onclick="togglePhotos(this)">🖼️ 사진 보기</button>`;
-            imgHtml = `<div class="item-images">` + (i.imageUrls).map(url => `<img src="${url}" class="item-img" onclick="window.open('${url}')">`).join('') + `</div>`;
-        }
+        let imgBtn = (i.imageUrls || []).length > 0 ? `<button class="photo-toggle-btn" id="img-btn-${i.id}" onclick="toggleImages('${i.id}')">📷 사진 보기</button>` : "";
+        let imgHtml = (i.imageUrls || []).map(url => `<img src="${url}" class="item-img" onclick="openImageModal('${url}')">`).join('');
         listDiv.innerHTML += `
-            <div class="item"><div class="info"><div><span class="tag tag-${i.category || '기타'}">${i.category || '기타'}</span><strong>${i.content}</strong></div><span class="time">${d}</span>${btnHtml}${imgHtml}</div>
-            <div class="amount-group"><span class="main-amount">${main}</span><span class="converted-amount">${sub}</span>
-            <div class="btn-group"><button class="edit-btn" onclick="openEditModal('${i.id}')">수정</button><button class="delete-btn" onclick="deleteData('${i.id}')">삭제</button></div></div></div>`;
+            <div class="item">
+                <div class="info">
+                    <div><span class="tag tag-${i.category || '기타'}">${i.category || '기타'}</span><strong>${i.content}</strong></div>
+                    <span class="time">${d}</span>
+                    ${imgBtn}
+                    <div class="item-images" id="img-box-${i.id}">${imgHtml}</div>
+                </div>
+                <div class="amount-group">
+                    <span class="main-amount">${main}</span><span class="converted-amount">${sub}</span>
+                    <div class="btn-group"><button class="edit-btn" onclick="openEditModal('${i.id}')">수정</button><button class="delete-btn" onclick="deleteData('${i.id}')">삭제</button></div>
+                </div>
+            </div>`;
     });
 });

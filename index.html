@@ -12,7 +12,7 @@
         }
     </script>
     
-    <link rel="stylesheet" href="style.css?v=3.7">
+    <link rel="stylesheet" href="style.css?v=3.5">
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
@@ -41,7 +41,7 @@
             
             <div class="file-input-wrapper">
                 <label for="image-input" class="file-label">📸 사진 첨부 (최대 2장)</label>
-                <input type="file" id="image-input" multiple accept="image/*" onchange="previewImages('image-input', 'image-preview-container')">
+                <input type="file" id="image-input" multiple accept="image/*" onchange="previewImages()">
             </div>
             <div id="image-preview-container" class="preview-container"></div>
 
@@ -110,19 +110,18 @@
                 <label><input type="radio" name="edit-currency" value="won"> ₩ 원화</label>
             </div>
             <input type="number" id="edit-amount" placeholder="금액">
-            
-            <div class="file-input-wrapper">
-                <label for="edit-image-input" class="file-label">📸 사진 변경 (선택 시 교체)</label>
-                <input type="file" id="edit-image-input" multiple accept="image/*" onchange="previewImages('edit-image-input', 'edit-image-preview')">
-            </div>
-            <div id="edit-image-preview" class="preview-container"></div>
-
             <div class="modal-btns">
-                <button onclick="updateData()" id="update-btn" class="save-btn">수정 완료</button>
+                <button onclick="updateData()" class="save-btn">수정 완료</button>
                 <button onclick="closeModal()" class="cancel-btn">취소</button>
             </div>
         </div>
     </div>
-    <script src="script.js?v=3.7"></script>
+
+    <div id="image-modal" class="image-modal" onclick="closeImageModal()">
+        <img id="modal-img-src" src="">
+        <p>클릭하면 닫힙니다</p>
+    </div>
+
+    <script src="script.js?v=3.5"></script>
 </body>
 </html>
