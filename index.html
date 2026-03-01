@@ -12,10 +12,11 @@
         }
     </script>
     
-    <link rel="stylesheet" href="style.css?v=2.2">
+    <link rel="stylesheet" href="style.css?v=3.0">
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-storage-compat.js"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -39,7 +40,13 @@
             </div>
             <input type="number" id="amount" placeholder="금액을 입력하세요">
             
-            <button onclick="saveData()" class="add-btn">내역 추가</button>
+            <div class="file-input-wrapper">
+                <label for="image-input" class="file-label">📸 사진 첨부 (최대 2장)</label>
+                <input type="file" id="image-input" multiple accept="image/*" onchange="previewImages()">
+            </div>
+            <div id="image-preview-container" class="preview-container"></div>
+
+            <button onclick="saveData()" id="save-btn" class="add-btn">내역 추가</button>
 
             <div class="chart-section">
                 <button id="toggle-chart-btn" onclick="toggleChart()" class="toggle-btn">📊 카테고리별 통계 보기</button>
@@ -61,6 +68,13 @@
                             <h4 id="details-title">세부 내역</h4>
                             <div id="details-total" class="details-total"></div>
                         </div>
+                        
+                        <div class="details-sort-group">
+                            <button onclick="sortDetails('latest')" class="sort-btn">최신순</button>
+                            <button onclick="sortDetails('high')" class="sort-btn">고액순</button>
+                            <button onclick="sortDetails('low')" class="sort-btn">저액순</button>
+                        </div>
+
                         <div id="details-list"></div>
                     </div>
                 </div>
@@ -108,6 +122,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=2.2"></script>
+    <script src="script.js?v=3.0"></script>
 </body>
 </html>

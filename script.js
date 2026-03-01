@@ -10,25 +10,82 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage(); // Storage 초기화
+
 let currentItems = [];
 const EXCHANGE_RATE = 47.3; 
-let editTargetId = null;
+let currentDetailItems = [];
 
-function saveData() {
+// 사진 미리보기 함수
+function previewImages() {
+    const input = document.getElementById('image-input');
+    const container = document.getElementById('image-preview-container');
+    container.innerHTML = '';
+    
+    if (input.files.length > 2) {
+        alert("사진은 최대 2장까지만 선택 가능합니다.");
+        input.value = '';
+        return;
+    }
+
+    Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-img';
+            container.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// 데이터 저장 (사진 업로드 포함)
+async function saveData() {
     const category = document.getElementById('category').value;
     const content = document.getElementById('content').value;
     const amount = document.getElementById('amount').value;
     const currency = document.querySelector('input[name="currency"]:checked').value;
+    const imageInput = document.getElementById('image-input');
+    const saveBtn = document.getElementById('save-btn');
+
     if (!content || !amount) { alert("내용과 금액을 입력해주세요!"); return; }
-    db.ref('expenses').push().set({
-        category: category, content: content, amount: Number(amount),
-        currency: currency, timestamp: Date.now()
-    }).then(() => { 
-        alert("입력되었습니다!"); 
-        document.getElementById('content').value = ''; 
-        document.getElementById('amount').value = ''; 
+    
+    saveBtn.disabled = true;
+    saveBtn.innerText = "업로드 중...";
+
+    let imageUrls = [];
+    const timestamp = Date.now();
+
+    try {
+        // 사진 업로드 로직 (최대 2장)
+        if (imageInput.files.length > 0) {
+            const uploadPromises = Array.from(imageInput.files).map(async (file, index) => {
+                const storageRef = storage.ref(`expenses_images/${timestamp}_${index}`);
+                await storageRef.put(file);
+                return await storageRef.getDownloadURL();
+            });
+            imageUrls = await Promise.all(uploadPromises);
+        }
+
+        await db.ref('expenses').push().set({
+            category, content, amount: Number(amount),
+            currency, timestamp, imageUrls
+        });
+
+        alert("입력되었습니다!");
+        document.getElementById('content').value = '';
+        document.getElementById('amount').value = '';
+        document.getElementById('image-input').value = '';
+        document.getElementById('image-preview-container').innerHTML = '';
         document.getElementById('category').value = '기타';
-    });
+    } catch (error) {
+        console.error(error);
+        alert("저장 중 오류가 발생했습니다.");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "내역 추가";
+    }
 }
 
 function toggleChart() {
@@ -44,30 +101,22 @@ function toggleChart() {
     }
 }
 
-function showCategoryDetails(category) {
-    const detailsDiv = document.getElementById('category-details');
+// 세부 내역 렌더링 (사진 표시 추가)
+function renderDetailItems() {
     const listDiv = document.getElementById('details-list');
-    const title = document.getElementById('details-title');
-    const totalDiv = document.getElementById('details-total');
-
-    const filtered = currentItems.filter(item => (item.category || '기타') === category)
-        .map(item => ({
-            ...item,
-            wonValue: (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount
-        }))
-        .sort((a, b) => b.wonValue - a.wonValue);
-
-    if (filtered.length === 0) return;
-
-    let categoryTotalSum = 0;
-    title.innerText = `🔍 ${category} 세부 내역`;
     listDiv.innerHTML = '';
     
-    filtered.forEach(item => {
-        categoryTotalSum += item.wonValue;
+    currentDetailItems.forEach(item => {
         const originalPrice = item.currency === 'baht' ? `${item.amount.toLocaleString()}฿` : `${item.amount.toLocaleString()}원`;
         const dateStr = new Date(item.timestamp).toLocaleString('ko-KR');
         
+        let imagesHtml = '';
+        if (item.imageUrls && item.imageUrls.length > 0) {
+            imagesHtml = `<div class="item-images">` + 
+                item.imageUrls.map(url => `<img src="${url}" class="item-img" onclick="window.open('${url}')">`).join('') + 
+                `</div>`;
+        }
+
         listDiv.innerHTML += `
             <div class="detail-item">
                 <div class="detail-main">
@@ -75,41 +124,61 @@ function showCategoryDetails(category) {
                     <span class="detail-price">${item.wonValue.toLocaleString()}원 <small>(${originalPrice})</small></span>
                 </div>
                 <div class="detail-time">${dateStr}</div>
+                ${imagesHtml}
             </div>`;
     });
+}
 
+function sortDetails(criteria) {
+    if (currentDetailItems.length === 0) return;
+    if (criteria === 'latest') currentDetailItems.sort((a, b) => b.timestamp - a.timestamp);
+    else if (criteria === 'high') currentDetailItems.sort((a, b) => b.wonValue - a.wonValue);
+    else if (criteria === 'low') currentDetailItems.sort((a, b) => a.wonValue - b.wonValue);
+    renderDetailItems();
+}
+
+function showCategoryDetails(category) {
+    const detailsDiv = document.getElementById('category-details');
+    const title = document.getElementById('details-title');
+    const totalDiv = document.getElementById('details-total');
+
+    currentDetailItems = currentItems.filter(item => (item.category || '기타') === category)
+        .map(item => ({
+            ...item,
+            wonValue: (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount
+        }));
+
+    if (currentDetailItems.length === 0) return;
+    currentDetailItems.sort((a, b) => b.timestamp - a.timestamp);
+
+    let categoryTotalSum = 0;
+    currentDetailItems.forEach(item => categoryTotalSum += item.wonValue);
+
+    title.innerText = `🔍 ${category} 세부 내역`;
     totalDiv.innerText = `합계: ${categoryTotalSum.toLocaleString()}원`;
+    
+    renderDetailItems();
     detailsDiv.style.display = 'block';
 }
 
-// ★ 필터링된 항목들만의 합계를 계산하여 보여주는 통계 함수 ★
 function updateChart() {
     const categoryTotals = { '교통': 0, '먹거리': 0, '숙박': 0, '관광': 0, '기타': 0 };
     const colors = { '교통': '#3498db', '먹거리': '#e67e22', '숙박': '#9b59b6', '관광': '#2ecc71', '기타': '#95a5a6' };
     const emojis = { '교통': '🚗', '먹거리': '🍕', '숙박': '🏨', '관광': '📸', '기타': '💡' };
 
     const selectedCats = Array.from(document.querySelectorAll('.cat-filter:checked')).map(el => el.value);
-    
-    // 1. 카테고리별 합산 수행
+    let filteredGrandTotal = 0;
+
     currentItems.forEach(item => {
         const wonValue = (item.currency || 'baht') === 'baht' ? Math.round(item.amount * EXCHANGE_RATE) : item.amount;
         const cat = item.category || '기타';
-        if (categoryTotals.hasOwnProperty(cat)) { 
-            categoryTotals[cat] += wonValue;
-        }
+        if (categoryTotals.hasOwnProperty(cat)) { categoryTotals[cat] += wonValue; }
     });
 
-    // 2. ★ 체크된 항목들만의 총합 계산 (이 금액이 비중 계산의 기준이 됨) ★
-    let filteredGrandTotal = 0;
-    selectedCats.forEach(cat => {
-        filteredGrandTotal += categoryTotals[cat];
-    });
-
-    // 화면 상단에 필터링된 합계 표시
+    selectedCats.forEach(cat => { filteredGrandTotal += categoryTotals[cat]; });
     const filteredTotalDisplay = document.getElementById('filtered-total-display');
     filteredTotalDisplay.innerText = `선택 항목 합계: ${filteredGrandTotal.toLocaleString()}원`;
 
-    // 3. 필터링 및 정렬 (체크된 것만 표시)
     const sortedCategories = Object.entries(categoryTotals)
         .filter(([cat]) => selectedCats.includes(cat))
         .sort((a, b) => b[1] - a[1]);
@@ -122,9 +191,7 @@ function updateChart() {
     sortedCategories.forEach(([category, total]) => {
         if (total === 0) return;
         const barWidth = (total / maxCategoryTotal) * 100;
-        // 필터링된 합계 대비 비중 계산
         const sharePercent = filteredGrandTotal > 0 ? ((total / filteredGrandTotal) * 100).toFixed(1) : 0;
-        
         barsContainer.innerHTML += `
             <div class="bar-row" onclick="showCategoryDetails('${category}')">
                 <div class="bar-label">${emojis[category]} ${category}</div>
@@ -152,7 +219,7 @@ function openEditModal(id) {
     document.getElementById('edit-modal').style.display = 'block';
 }
 
-function closeModal() { document.getElementById('edit-modal').style.display = 'none'; editTargetId = null; }
+function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
 
 function updateData() {
     const category = document.getElementById('edit-category').value;
@@ -163,8 +230,8 @@ function updateData() {
     if (!content || !amount || !timeValue) { alert("모든 항목을 입력해주세요!"); return; }
     const newTimestamp = new Date(timeValue).getTime();
     db.ref('expenses/' + editTargetId).update({
-        category: category, content: content, amount: Number(amount),
-        currency: currency, timestamp: newTimestamp
+        category, content, amount: Number(amount),
+        currency, timestamp: newTimestamp
     }).then(() => { alert("수정되었습니다."); closeModal(); });
 }
 
@@ -223,7 +290,6 @@ db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
     });
     totalWonSpan.innerText = Math.round(totalWonSum).toLocaleString();
     totalBahtSub.innerText = `(바트 지출만 합산: ${totalBahtOnly.toLocaleString()} ฿)`;
-    
     updateChart(); 
 
     [...currentItems].reverse().forEach((item) => {
@@ -231,11 +297,20 @@ db.ref('expenses').orderByChild('timestamp').on('value', (snapshot) => {
         const currency = item.currency || 'baht';
         let mainDisplay = currency === 'baht' ? `${item.amount.toLocaleString()} ฿` : `${item.amount.toLocaleString()} 원`;
         let subDisplay = currency === 'baht' ? `(${Math.round(item.amount * EXCHANGE_RATE).toLocaleString()}원)` : "";
+        
+        let imagesHtml = '';
+        if (item.imageUrls && item.imageUrls.length > 0) {
+            imagesHtml = `<div class="item-images">` + 
+                item.imageUrls.map(url => `<img src="${url}" class="item-img" onclick="window.open('${url}')">`).join('') + 
+                `</div>`;
+        }
+
         listDiv.innerHTML += `
             <div class="item">
                 <div class="info">
                     <div><span class="tag tag-${item.category || '기타'}">${item.category || '기타'}</span><strong>${item.content}</strong></div>
                     <span class="time">${date}</span>
+                    ${imagesHtml}
                 </div>
                 <div class="amount-group">
                     <span class="main-amount">${mainDisplay}</span>
